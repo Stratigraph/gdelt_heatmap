@@ -16,16 +16,20 @@ class Event(db.Model):
   gdelt_id = db.Column(db.Integer, primary_key=True)
   event_date = db.Column(db.DateTime)
   event_code = db.Column(db.String(8))
+  country_code = db.Column(db.String(2))
   goldstein = db.Column(db.Float)
-  num_mentions = db.Column(db.Integer)
   lat = db.Column(db.Float)
   lng = db.Column(db.Float)
 
   def __repr__(self):
     """Provide helpful representation when printed."""
 
-    return "<Event gdelt_id={} event_date={}>".format(self.gdelt_id, 
-                                                      self.event_date)
+    repr_string = "<Event gdelt_id={} ".format(self.gdelt_id)
+    repr_string += "event_date={} ".format(self.event_date)
+    repr_string += "event_code={} ".format(self.event_code)
+    repr_string += "country_code={} ".format(self.country_code)
+
+    return repr_string
 
 
 class EventFile(db.Model):
