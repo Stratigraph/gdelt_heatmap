@@ -22,7 +22,18 @@ app.jinja_env.undefined = StrictUndefined
 def index():
     """Homepage."""
 
-    return render_template("map.html")
+    return render_template("home.html")
+
+
+@app.route('/google')
+def render_google():
+
+    return render_template("map_google.html")
+
+@app.route('/d3')
+def render_d3():
+
+    return render_template("map_d3.html")
 
 
 if __name__ == "__main__":
