@@ -1,4 +1,4 @@
-"""Models and database functions for Ratings project."""
+"""Models and database functions for heatmaps project."""
 import time
 from flask_sqlalchemy import SQLAlchemy
 
@@ -9,6 +9,7 @@ from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
 class Event(db.Model):
+  """gdelt events and their data"""
 
   __tablename__ = "events"
 
@@ -20,6 +21,42 @@ class Event(db.Model):
   lat = db.Column(db.Float)
   lng = db.Column(db.Float)
 
+  def __repr__(self):
+    """Provide helpful representation when printed."""
+
+    return "<Event gdelt_id={} event_date={}>".format(self.gdelt_id, 
+                                                      self.event_date)
+
+
+class EventFile(db.Model):
+  """downloaded files from gdelt"""
+
+  __tablename__ = "gdelt_files"
+
+  file_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+  zipfile_name = db.Column(db.String(64), nullable=False)
+  csvfile_name = db.Column(db.String(64))
+
+  # track whether the file has been downloaded
+  downloaded = db.Column(db.Boolean, default=False)
+
+  # track whether the file has been unzipped
+  unzipped = db.Column(db.Boolean, default=False)
+
+  # track whether the data has been entered into the db
+  processed = db.Column(db.Boolean, default=False)
+
+
+  def __repr__(self):
+    """Provide helpful representation when printed."""
+
+    repr_string = "<EventFile file_id={} ".format(self.file_id)
+    repr_string += "zipfile_name={} ".format(self.zipfile_name)
+    repr_string += "downloaded={} ".format(self.downloaded)
+    repr_string += "unzipped={} ".format(self.unzipped)
+    repr_string += "processed={}>".format(self.processed)
+
+    return repr_string
 
 
 ##############################################################################
