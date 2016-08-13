@@ -1,3 +1,5 @@
+"""download and process files from gdelt to seed database"""
+
 import datetime
 from sqlalchemy import func
 
@@ -50,7 +52,6 @@ def update_gdelt_stragglers():
         print "*********couldn't find {} in db".format(filename)
 
 
-
 def get_gdelt_files():
   """get list of gdelt files from gdelt download site, add to gdelt_files table"""
 
@@ -77,78 +78,81 @@ def get_gdelt_files():
   db.session.commit()
 
 
-def download_gdelt_files():
+def process_gdelt_files():
+  """download, unzip, and process files, one at a time (for the disk space!)"""
+
+  # because of disk space issues, process unzipped files first
+  for file in EventFile.query.filter(EventFile.unzipped == True).all():
+    if not file.processed:
+      add_to_db(file)
+
+
+  # now process the rest
+  for file in EventFile.query.filter(EventFile.unzipped == False).all():
+    if not file.downloaded:
+      download_gdelt_file(file)
+    if not file.unzipped:
+      uznip_gdelt_file(file)
+    if not file.processed:
+      add_to_db(file)
+
+
+def download_gdelt_file(file):
   """download each file in the gdelt_files table"""
 
-  # download and unzip each file
-  for file in EventFile.query.all():
+  name = file.zipfile_name
+
+  print "downloading", name
+
+  filepath = DATADIR + name
+  r = requests.get(GDELT_DOWNLOAD_URL + name)
+
+  # write to file
+  with open(filepath, "wb") as code:
+    code.write(r.content)
+
+  file.downloaded = True
+
+  # commit here instead of end of function, in case script gets interrupted
+  db.session.commit()
+  
+
+def unzip_gdelt_file(file):
+    """unzip each .zip file in the data dir"""
 
     name = file.zipfile_name
 
-    # in case this is running after having been partially run before,
-    # skip any already-downloaded files.
+    print "unzipping", name
 
-    if file.downloaded:
-      print "{} already downloaded. Skipping.".format(name)
+    filepath = DATADIR + name
 
-    else: 
-      print "downloading", name
+    # unzip the file
+    zip_ref = zipfile.ZipFile(filepath, 'r')
+    zip_contents = zip_ref.namelist()
 
-      filepath = DATADIR + name
-      r = requests.get(GDELT_DOWNLOAD_URL + name)
+    # if there's more (or less) than one file, we're in trouble
+    if len(zip_contents) != 1:
+      print "***************{} contains {} archives. Skipping.".format(filepath, len(zip_contents))
+      return
 
-      # write to file
-      with open(filepath, "wb") as code:
-        code.write(r.content)
+    zip_ref.extractall(DATADIR)
+    zip_ref.close()
 
-      file.downloaded = True
+    # rm the zip file for disk space
+    try:
+      os.remove(DATADIR + name)
+    except:
+      print "*********could not remove file {}".format(name)
 
-      # commit here instead of end of function, in case script gets interrupted
-      db.session.commit()
-  
+    # we've already checked that there's only one file
+    file.csvfile_name = zip_contents[0]
+    file.unzipped = True
 
-def unzip_gdelt_files():
-    """unzip each .zip file in the data dir"""
-
-    for file in EventFile.query.all():
-
-      name = file.zipfile_name
-
-      if file.unzipped:
-        print "{} already unzipped. Skipping.".format(name)
-
-      else:
-        filepath = DATADIR + name
-
-        # unzip the file
-        zip_ref = zipfile.ZipFile(filepath, 'r')
-        zip_contents = zip_ref.namelist()
-
-        # if there's more (or less) than one file, we're in trouble
-        if len(zip_contents) != 1:
-          print "***************{} contains {} archives. Skipping.".format(filepath, len(zip_contents))
-          continue
-
-        zip_ref.extractall(DATADIR)
-        zip_ref.close()
-
-        # rm the zip file for disk space
-        try:
-          os.remove(DATADIR + name)
-        except:
-          print "*********could not remove file {}".format(name)
-
-        # we've already checked that there's only one file
-        file.csvfile_name = zip_contents[0]
-        file.unzipped = True
-
-        # commit here instead of end of function, in case script gets interrupted
-        db.session.commit()
-
-        add_to_db(name)
+    # commit here instead of end of function, in case script gets interrupted
+    db.session.commit()
 
 
-def add_to_db(zipfile_name):
+def add_to_db(file):
     """parse file contents for file param and add data to db"""
     
     # indexes taken from these files: 
@@ -158,31 +162,22 @@ def add_to_db(zipfile_name):
     # reference: 
     # http://data.gdeltproject.org/documentation/GDELT-Data_Format_Codebook.pdf
 
-    file = 
+    filepath = DATADIR + file.csvfile_name
+    print "processing", filepath
 
-      name = file.csvfile_name
+    # process line by line
+    with open(filepath) as f:
+      for line in f:
+        process_line(line)
 
-      if file.processed:
-        print "{} already processed. Skipping.".format(name)
+    file.processed = True
+    db.session.commit()
 
-      else:
-        filepath = DATADIR + name
-        print "processing", filepath
-
-        # process line by line
-        with open(filepath) as f:
-          for line in f:
-            process_line(line)
-
-        file.processed = True
-        db.session.commit()
-
-
-      # rm the zip file for disk space
-      try:
-        os.remove(DATADIR + name)
-      except:
-        print "*********could not remove file {}".format(name)
+    # rm the csv file for disk space
+    try:
+      os.remove(filepath)
+    except:
+      print "*********could not remove file {}".format(filepath)
 
 
 def process_line(line):
@@ -220,22 +215,8 @@ if __name__ == "__main__":
     # create tables if they don't exist
     db.create_all()
 
-    # only run this once
-    # print "*"*10, "ADDING DOWNLOADED ZIPFILES TO DB"
-    # add_zipfiles_to_db()
-
     # print "*"*10, "GETTING FILE LIST"
     # get_gdelt_files()
 
-    # print "*"*10, "DOWNLOADING"
-    # download_gdelt_files()
-
-    print "*"*10, "ADDING UNZIPPED STRAGGLERS"
-    update_gdelt_stragglers()
-
-    print "*"*10, "UNZIPPING"
-    unzip_gdelt_files()
-
-    print "*"*10, "PROCESSING"
-    add_to_db()
-
+    print "*"*10, "PROCESSING FILES"
+    process_gdelt_files()
