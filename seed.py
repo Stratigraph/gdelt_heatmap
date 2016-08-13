@@ -19,38 +19,6 @@ GDELT_DOWNLOAD_URL = 'http://data.gdeltproject.org/events/'
 GDELT_DOWNLOAD_LIST_PAGE = 'index.html'
 GDELT_DOWNLOAD_FILE_RE = r'^201\d+.*\.zip$' # only get files with dates in the 2010s
 
-def add_zipfiles_to_db():
-  """add already-downloaded files (from before I was tracking in db) to db"""
-
-  print "GETTING FILES ALREADY DOWNLOADED"
-
-  for filename in os.listdir(DATADIR):
-    if re.match(GDELT_DOWNLOAD_FILE_RE, filename):
-      try:
-        file = EventFile.query.filter(EventFile.zipfile_name == filename).one()
-        file.downloaded = True
-        db.session.commit()
-
-      except NoResultFound:
-        file = EventFile(zipfile_name=filename, downloaded=True)
-        db.session.add(file)
-        print "added {} to db as downloaded".format(filename)
-
-  db.session.commit()
-
-
-def update_gdelt_stragglers():
-  """ran out of disk space; db and disk got out of sync"""
-
-  for filename in os.listdir(DATADIR):
-    if re.match(GDELT_DOWNLOAD_FILE_RE, filename):
-      try:
-        file = EventFile.query.filter(EventFile.zipfile_name == filename).one()
-        file.unzipped = False
-        db.session.commit()
-      except:
-        print "*********couldn't find {} in db".format(filename)
-
 
 def get_gdelt_files():
   """get list of gdelt files from gdelt download site, add to gdelt_files table"""
@@ -81,20 +49,18 @@ def get_gdelt_files():
 def process_gdelt_files():
   """download, unzip, and process files, one at a time (for the disk space!)"""
 
-  # because of disk space issues, process unzipped files first
-  for file in EventFile.query.filter(EventFile.unzipped == True).all():
-    if not file.processed:
-      add_to_db(file)
-
-
   # now process the rest
-  for file in EventFile.query.filter(EventFile.unzipped == False).all():
+  # add some logic in case script had to be restarted at some point
+  for file in EventFile.query.all():
     if not file.downloaded:
       download_gdelt_file(file)
     if not file.unzipped:
-      uznip_gdelt_file(file)
+      unzip_gdelt_file(file)
     if not file.processed:
       add_to_db(file)
+
+    # print a newline for output formatting
+    print
 
 
 def download_gdelt_file(file):
@@ -215,8 +181,8 @@ if __name__ == "__main__":
     # create tables if they don't exist
     db.create_all()
 
-    # print "*"*10, "GETTING FILE LIST"
-    # get_gdelt_files()
+    print "*"*10, "GETTING FILE LIST"
+    get_gdelt_files()
 
     print "*"*10, "PROCESSING FILES"
     process_gdelt_files()
