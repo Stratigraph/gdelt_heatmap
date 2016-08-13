@@ -151,29 +151,34 @@ def process_line(line):
 
   tokens = line.split('\t')
 
-  # the spec changed April 1, 2013, but it didn't affect any of these 
-  # fields
-  eid = tokens[0]
-  date = datetime.strptime(tokens[1], '%Y%m%d')
+  # only record apology or forgiveness events
+  # reference: http://gdeltproject.org/data/lookups/CAMEO.eventcodes.txt
   ecode = tokens[26]
-  try:
-    # don't fall over if one of these isn't populated; just move on
-    goldstein = float(tokens[30])
-    num_mentions = int(tokens[31])
-    lat = float(tokens[53])
-    lng = float(tokens[54])
-  except:
-    return
 
-  evt = Event(gdelt_id=eid, 
-              event_date=date, 
-              event_code=ecode, 
-              goldstein=goldstein,
-              num_mentions=num_mentions,
-              lat=lat,
-              lng=lng)
+  if ecode in ['055', '056']:
 
-  db.session.add(evt)
+    # the spec changed April 1, 2013, but it didn't affect any of these 
+    # fields
+    eid = tokens[0]
+    date = datetime.strptime(tokens[1], '%Y%m%d')
+    ccode = tokens[51]
+    try:
+      # don't fall over if one of these isn't populated; just move on
+      goldstein = float(tokens[30])
+      lat = float(tokens[53])
+      lng = float(tokens[54])
+    except:
+      return
+
+    evt = Event(gdelt_id=eid, 
+                event_date=date, 
+                event_code=ecode, 
+                goldstein=goldstein,
+                country_code=ccode,
+                lat=lat,
+                lng=lng)
+
+    db.session.add(evt)
 
 if __name__ == "__main__":
     connect_to_db(app)
