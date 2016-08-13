@@ -1,32 +1,32 @@
 "use strict";
 
+// global map
+var map;
 
-// world map initialize function comes from 
-// http://stackoverflow.com/questions/9893680/google-maps-api-v3-show-the-whole-world
+// show the parts of the world where most events take place (sorry Antarctica...)
 function initialize () {
 
   var mapOptions = {
     center: new google.maps.LatLng(0, 0),
-    zoom: 1,
-    minZoom: 1
+    zoomControl: false,
+    streetViewControl: false,
+    navigationControl: false,
+    mapTypeControl: false,
+    scaleControl: false,
+    draggable: false,
   };
 
-  var map = new google.maps.Map(document.getElementById('map'),mapOptions );
 
-  var allowedBounds = new google.maps.LatLngBounds(
-    new google.maps.LatLng(85, -180), // top left corner of map
-    new google.maps.LatLng(-85, 180)  // bottom right corner
+  map = new google.maps.Map(document.getElementById('map'), mapOptions);
+
+  // world boundaries, skipping far north and far south
+  // for east and west, start at 0 and go as far as the map will take you
+  var worldBounds = new google.maps.LatLngBounds(
+    new google.maps.LatLng(-20, 0), 
+    new google.maps.LatLng(50, 0)
   );
 
-  var k = 5.0; 
-  var n = allowedBounds .getNorthEast().lat() - k;
-  var e = allowedBounds .getNorthEast().lng() - k;
-  var s = allowedBounds .getSouthWest().lat() + k;
-  var w = allowedBounds .getSouthWest().lng() + k;
-  var neNew = new google.maps.LatLng( n, e );
-  var swNew = new google.maps.LatLng( s, w );
-  boundsNew = new google.maps.LatLngBounds( swNew, neNew );
-  map.fitBounds(boundsNew);
+  map.fitBounds(worldBounds);
 
 }
 
