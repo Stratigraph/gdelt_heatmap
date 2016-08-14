@@ -28,6 +28,79 @@ function initialize () {
 
   map.fitBounds(worldBounds);
 
+  // from google maps lecture demo 'bears.js'
+  // Define global infoWindow
+  // If you do this inside the loop where you retrieve the json,
+  // the windows do not automatically close when a new marker is clicked
+  // and you end up with a bunch of windows opened at the same time.
+  // What this does is create one infowindow and we replace the content
+  // inside for each marker.
+  var infoWindow = new google.maps.InfoWindow({
+      width: 150
+  });
+
+
+$.get('events.json', function (response) {
+  var evts = response.events
+  for(var i=0; i < evts.length; i++) {
+
+    var marker, html
+
+    var evt = evts[i];
+    console.log(evt);
+
+    // from http://stackoverflow.com/questions/11162740/where-i-can-find-the-little-red-dot-image-used-in-google-map
+       var circle ={
+          path: google.maps.SymbolPath.CIRCLE,
+          fillColor: 'red',
+          fillOpacity: .4,
+          scale: evt.count * 10,
+          strokeColor: 'white',
+          strokeWeight: 1
+      };
+
+    // from google maps lecture demo 'bears.js'
+
+
+          // Define the marker
+          marker = new google.maps.Marker({
+              position: new google.maps.LatLng(evt.lat, evt.lng),
+              map: map,
+              title: evt.titles[0],
+              icon: circle
+          });
+
+          // Define the content of the infoWindow
+          html = (
+              '<div class="window-content">' +
+                  '<p><a target="blank" href="' + evt.urls[0] + '">' + evt.titles[0] + '</a></p>' +
+              '</div>');
+
+          // Inside the loop we call bindInfoWindow passing it the marker,
+          // map, infoWindow and contentString
+          bindInfoWindow(marker, map, infoWindow, html);
+      }
+
+  });
+
+    // from google maps lecture demo 'bears.js'
+  // This function is outside the for loop.
+  // When a marker is clicked it closes any currently open infowindows
+  // Sets the content for the new marker with the content passed through
+  // then it open the infoWindow with the new content on the marker that's clicked
+  function bindInfoWindow(marker, map, infoWindow, html) {
+      google.maps.event.addListener(marker, 'click', function () {
+          infoWindow.close();
+          infoWindow.setContent(html);
+          infoWindow.open(map, marker);
+      });
+  }
+
+
 }
+
+// get events and draw on map
+
+
 
 google.maps.event.addDomListener(window, 'load', initialize);
