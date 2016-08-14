@@ -2,10 +2,13 @@
 
 from jinja2 import StrictUndefined
 
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify, request
 from flask_debugtoolbar import DebugToolbarExtension
 
-from model import connect_to_db, db
+from model import connect_to_db, db, Event
+
+from helper import get_event_data
+
 import os
 
 
@@ -31,11 +34,26 @@ def index():
 
 @app.route('/google')
 def render_google():
+    """render a google map with the data"""
 
     return render_template("map_google.html", gmaps_key=GMAPS_KEY)
 
+@app.route('/events.json')
+def return_events_json():
+    """return events json for google mapping"""
+
+    year = request.args.get('year', 2016)
+    week = request.args.get('week', 31)
+
+    # returns list of event objects for this week and year
+    events_data = get_event_data(year, week)
+
+    return jsonify(events_data)
+
+
 @app.route('/d3')
 def render_d3():
+    """render a d3 map with the data"""
 
     return render_template("map_d3.html")
 
