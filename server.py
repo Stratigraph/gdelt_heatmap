@@ -6,6 +6,7 @@ from flask import Flask, render_template
 from flask_debugtoolbar import DebugToolbarExtension
 
 from model import connect_to_db, db
+import os
 
 
 app = Flask(__name__)
@@ -16,6 +17,9 @@ app.secret_key = "v9m2hY7#%z!dWar8bMW^"
 # Normally, if you use an undefined variable in Jinja2, it fails silently.
 # This is horrible. Fix this so that, instead, it raises an error.
 app.jinja_env.undefined = StrictUndefined
+
+# keep secret key out of git
+GMAPS_KEY = os.environ['GOOGLE_MAPS_API_KEY']
 
 
 @app.route('/')
@@ -28,7 +32,7 @@ def index():
 @app.route('/google')
 def render_google():
 
-    return render_template("map_google.html")
+    return render_template("map_google.html", gmaps_key=GMAPS_KEY)
 
 @app.route('/d3')
 def render_d3():
