@@ -26,7 +26,7 @@ class Event(db.Model):
   def __repr__(self):
     """Provide helpful representation when printed."""
 
-    return "<Event gdelt_id={} {}".format(self.gdelt_id, self.title)
+    return "<Event gdelt_id={} date={} country={}".format(self.gdelt_id, self.event_date, self.country_code)
 
 
 class EventFile(db.Model):
