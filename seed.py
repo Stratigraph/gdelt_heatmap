@@ -17,7 +17,7 @@ import os
 DATADIR = "data/"
 GDELT_DOWNLOAD_URL = 'http://data.gdeltproject.org/events/'
 GDELT_DOWNLOAD_LIST_PAGE = 'index.html'
-GDELT_DOWNLOAD_FILE_RE = r'^201\d+.*\.zip$' # only get files with dates in the 2010s
+GDELT_DOWNLOAD_FILE_RE = r'^201[56].*\.zip$' # only get files with dates since 2015
 
 
 def get_gdelt_files():
@@ -151,11 +151,16 @@ def process_line(line):
 
   tokens = line.split('\t')
 
-  # only record apology or forgiveness events
+  # only record apology or forgiveness events with a url
   # reference: http://gdeltproject.org/data/lookups/CAMEO.eventcodes.txt
   ecode = tokens[26]
+  url = tokens[57]
 
-  if ecode in ['055', '056']:
+  if ecode in ['055', '056'] and url:
+
+    # don't reprocess if we've seen this url before
+    if Event.query.filter(Event.url == url).count():
+      return
 
     # the spec changed April 1, 2013, but it didn't affect any of these 
     # fields
@@ -170,15 +175,32 @@ def process_line(line):
     except:
       return
 
-    evt = Event(gdelt_id=eid, 
-                event_date=date, 
-                event_code=ecode, 
-                goldstein=goldstein,
-                country_code=ccode,
-                lat=lat,
-                lng=lng)
+    # get the title
+    try: 
+      r = requests.get(url, verify=False, timeout=10)
+    except:
+      # can't reach the site? move along...
+      return
 
-    db.session.add(evt)
+    if r.ok:  
+      soup = BeautifulSoup(r.content, 'html.parser')
+      title_tag = soup.title
+
+      if title_tag:
+        title = title_tag.string
+        evt = Event(gdelt_id=eid, 
+                    event_date=date, 
+                    title=title,
+                    url=url,
+                    event_code=ecode, 
+                    goldstein=goldstein,
+                    country_code=ccode,
+                    lat=lat,
+                    lng=lng)
+
+        db.session.add(evt)
+        db.session.flush()
+
 
 if __name__ == "__main__":
     connect_to_db(app)
