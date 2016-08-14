@@ -1,5 +1,12 @@
 path {
   stroke: white;
   stroke-width: 0.5px;
-  fill: black;
+  fill: #ccc;
+}
+
+.bubble {
+  fill-color: #f00;
+  fill-opacity: .5;
+  stroke: #fff;
+  stroke-width: .5px;
 }
