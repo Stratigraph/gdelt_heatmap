@@ -182,7 +182,7 @@ def process_line(line):
       # can't reach the site? move along...
       return
 
-    if r.ok:  
+    if r.status_code == 200:  
       soup = BeautifulSoup(r.content, 'html.parser')
       title_tag = soup.title
 
