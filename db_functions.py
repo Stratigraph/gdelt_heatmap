@@ -4,10 +4,7 @@ from model import db, Event
 from sqlalchemy import extract
 
 
-def get_events(year, week):
+def get_events():
   """return all events in db for a particular year and week"""
-  query = Event.query
-  query.filter(extract('week', Event.event_date) == week)
-  query.filter(extract('year', Event.event_date) == year)
-
-  return query.all()
+  
+  return Event.query.all()

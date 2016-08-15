@@ -42,11 +42,8 @@ def render_google():
 def return_events_json():
     """return events json for google mapping"""
 
-    year = request.args.get('year', 2016)
-    week = request.args.get('week', 34)
-
-    # returns list of event objects for this week and year
-    events_data = get_event_data(year, week)
+    # returns list of event objects from the db
+    events_data = get_event_data()
 
     return jsonify(events_data)
 

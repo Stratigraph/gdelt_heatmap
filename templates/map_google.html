@@ -1,11 +1,18 @@
 <html>
   <head>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ gmaps_key }}"></script>
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.0/themes/base/jquery-ui.css">
     <link rel="stylesheet" href="static/css/map_google.css">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.0/jquery-ui.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ gmaps_key }}"></script>
   </head>
   <body>
     <div id="map"></div>
+    <div id="slider"></div>
+    <div>
+      Date: <span id="date"></span><br>
+    </div>
     <script src="static/js/google_mapstyles.js"></script>
     <script src="static/js/map_google.js"></script>
   </body>
