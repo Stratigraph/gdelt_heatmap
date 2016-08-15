@@ -8,12 +8,12 @@ function initialize () {
 
   var mapOptions = {
     center: new google.maps.LatLng(0, 0),
-    zoomControl: false,
+    // zoomControl: false,
     streetViewControl: false,
     navigationControl: false,
     mapTypeControl: false,
     scaleControl: false,
-    draggable: false,
+    // draggable: false,
   };
 
 
@@ -40,46 +40,66 @@ function initialize () {
   });
 
 
-$.get('events.json', function (response) {
-  var evts = response.events
-  for(var i=0; i < evts.length; i++) {
-
+$.get('events.json', function (events) {
+  // iterate over keys of js object
+  for(var ltlngString in events) {
     var marker, html
 
-    var evt = evts[i];
-    console.log(evt);
+    var ltlng = events[ltlngString]
+    var fgCount = ltlng.fgEvts.length;
+    var apCount = ltlng.apEvts.length;
 
-    // from http://stackoverflow.com/questions/11162740/where-i-can-find-the-little-red-dot-image-used-in-google-map
-       var circle ={
-          path: google.maps.SymbolPath.CIRCLE,
-          fillColor: 'red',
-          fillOpacity: .4,
-          scale: evt.count * 10,
-          strokeColor: 'white',
-          strokeWeight: 1
+    var apColor = 'red'
+    var fgColor = 'blue'
+    var markerScale = 0.5
+
+
+    if (apCount) {
+      makeMarker(apColor, ltlng.apEvts)
+    }
+
+    if (fgCount) {
+      makeMarker(fgColor, ltlng.fgEvts)
+    }
+
+
+    function makeMarker(markerColor, evts) {
+      // from http://stackoverflow.com/questions/11162740/where-i-can-find-the-little-red-dot-image-used-in-google-map
+      var circle = {
+        path: google.maps.SymbolPath.CIRCLE,      
+        fillColor: markerColor,
+        fillOpacity: 0.4,
+        scale: markerScale * evts.length,
+        strokeColor: 'white',
+        strokeWeight: 1
       };
-
-    // from google maps lecture demo 'bears.js'
-
-
-          // Define the marker
+           // Define the marker
           marker = new google.maps.Marker({
-              position: new google.maps.LatLng(evt.lat, evt.lng),
+              position: new google.maps.LatLng(ltlng.lat, ltlng.lng),
               map: map,
-              title: evt.titles[0],
+              // title: evt.titles[0],
               icon: circle
           });
 
           // Define the content of the infoWindow
+          var links = ''
+          for (var i=0; i < evts.length; i++) {
+            links += '<p><a target="blank" href="';
+            links += evts[i].url;
+            links += '">';
+            links += evts[i].title;
+            links += '</a></p>';
+          }
           html = (
               '<div class="window-content">' +
-                  '<p><a target="blank" href="' + evt.urls[0] + '">' + evt.titles[0] + '</a></p>' +
+                links + 
               '</div>');
 
           // Inside the loop we call bindInfoWindow passing it the marker,
           // map, infoWindow and contentString
           bindInfoWindow(marker, map, infoWindow, html);
       }
+    }
 
   });
 

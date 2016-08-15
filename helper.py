@@ -21,10 +21,19 @@ def get_event_data(year, week):
         latlng = '|'.join([str(lat), str(lng)])
 
         if latlng not in events_data:
-            events_data[latlng] = {'lat': lat, 'lng': lng, 'evts': []}
+            events_data[latlng] = {'lat': lat, 'lng': lng, 'apEvts': [], 'fgEvts': []}
 
         # add title, url, and event code (type) info  
-        evt_info = {'title': event.title, 'url': event.url, 'code': event.event_code}
-        events_data[latlng]['evts'].append(evt_info)
+        evt_info = {'title': event.title, 'url': event.url}
+
+        if event.event_code == '055': # apology:
+            elist = 'apEvts'
+        elif event.event_code == '056': # forgiveness
+            elist = 'fgEvts'
+        else:
+            print "bad event code: ", event_code
+            continue
+
+        events_data[latlng][elist].append(evt_info)
 
     return events_data
