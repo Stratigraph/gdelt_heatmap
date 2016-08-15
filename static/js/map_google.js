@@ -13,6 +13,7 @@ function initialize () {
     navigationControl: false,
     mapTypeControl: false,
     scaleControl: false,
+    styles: MAPSTYLES,
     // draggable: false,
   };
 
