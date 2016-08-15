@@ -29,7 +29,7 @@ def get_event_data():
         # key can't be a tuple for jsonification, so using string
         latlng = '|'.join([str(lat), str(lng)])
 
-        if latlng not in events_data:
+        if latlng not in events_data[date_key]:
             events_data[date_key][latlng] = {'lat': lat, 'lng': lng, 'apEvts': [], 'fgEvts': []}
 
         # add title, url, and event code (type) info  
