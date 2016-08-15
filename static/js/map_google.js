@@ -94,20 +94,23 @@ function plotEvents(timestamp) {
 
     var apColor = 'red'
     var fgColor = 'blue'
-    var markerScale = 8
+    var markerScaleMultiplier = 4
 
-    makeMarkers(apColor, ltlng.apEvts)
-    makeMarkers(fgColor, ltlng.fgEvts)
+    if (ltlng.apEvts.length) {makeMarkers(apColor, ltlng.apEvts)}
+    if (ltlng.fgEvts.length) {makeMarkers(fgColor, ltlng.fgEvts)}
   }
 
   // a function to make a marker for event data from a latlng
   function makeMarkers(markerColor, evts) {
     // from http://stackoverflow.com/questions/11162740/where-i-can-find-the-little-red-dot-image-used-in-google-map
+    var unAdjustedScale = markerScaleMultiplier * evts.length;
+    var adjustedScale = unAdjustedScale > 4 ? unAdjustedScale : 4;
+
     var circle = {
       path: google.maps.SymbolPath.CIRCLE,      
       fillColor: markerColor,
       fillOpacity: 0.4,
-      scale: markerScale * evts.length,
+      scale: adjustedScale,
       strokeColor: 'white',
       strokeWeight: 1
     };
